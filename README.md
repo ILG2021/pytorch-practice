@@ -1,5 +1,3 @@
-pytorch-practice with online tutorial:
+asr：
+参考 https://www.youtube.com/watch?v=LZ5xljPCJfA
 
-https://tingsongyu.github.io/PyTorch-Tutorial-2nd/chapter-8/8.1-classification.html
-
-Thanks the origin author for making this nice tutorial
