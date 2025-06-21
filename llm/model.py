@@ -25,12 +25,15 @@ class AttentionLayer(nn.Module):
         self.value_dense = nn.Linear(embed_size, embed_size)
 
     # embedding batch, seq_len, dim
-    def forward(self, embeddings: torch.Tensor):
+    def forward(self, embeddings: torch.Tensor, mask):
         seq_len = embeddings.shape[1]
         query = self.query_dense(embeddings)  # 自注意力，如果query是别的embedding，是交叉注意力
         key = self.query_dense(embeddings)
         value = self.query_dense(embeddings)
-        right_triangular_mask = torch.tril(torch.ones(1, seq_len, seq_len)).to(embeddings.device)
+        if mask:
+            right_triangular_mask = torch.tril(torch.ones(1, seq_len, seq_len)).to(embeddings.device)
+        else:
+            right_triangular_mask = None
         attention, attention_scores = calculate_attention(query, key, value, right_triangular_mask)
         return attention, attention_scores
 
@@ -55,8 +58,8 @@ class TransformerBlock(nn.Module):
         self.norm_layer = nn.LayerNorm(embed_size)
         self.feed_forward = FeedForward(embed_size)
 
-    def forward(self, x):
-        context, attention_scores = self.attention_layer(x)
+    def forward(self, x, mask):
+        context, attention_scores = self.attention_layer(x, mask)
         context = self.norm_layer(context)
         context = F.gelu(context)
         output = context + x
@@ -68,10 +71,10 @@ class Transformer(nn.Module):
         super().__init__()
         self.transformer_blocks = nn.ModuleList([TransformerBlock(embed_size) for _ in range(num_layers)])
 
-    def forward(self, x):
+    def forward(self, x, mask=False):
         attention_scores = []
         for transformer_block in self.transformer_blocks:
-            x, score = transformer_block(x)
+            x, score = transformer_block(x, mask)
             attention_scores.append(score)
         return x, attention_scores
 
@@ -81,7 +84,7 @@ class SinPositionEncoding(nn.Module):
         super().__init__()
         position = torch.arange(max_seq_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, embed_size, 2) * (-math.log(10000.0) / embed_size))
-        pe = torch.zeros(20, embed_size)
+        pe = torch.zeros(max_seq_len, embed_size)
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
         self.register_buffer("positional_embedding", pe)
@@ -100,7 +103,8 @@ class CausalLM(nn.Module):
     def forward(self, x, return_attention_scores=False):
         x = nn.functional.embedding(x, self.embedding_layer)
         x = self.positional_encoding(x)
-        x, attention_scores = self.transformer(x)
+        # x形状 b n d
+        x, attention_scores = self.transformer(x, True)
         logits = torch.matmul(x, self.embedding_layer.T)
         if return_attention_scores:
             return logits, attention_scores
