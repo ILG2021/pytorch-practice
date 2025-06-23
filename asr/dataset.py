@@ -9,7 +9,6 @@ class CustomDataset(Dataset):
 
     def __init__(self):
         self.dataset = datasets.load_dataset("m-aliabbas/idrak_timit_subsample1", split="train")
-        print("dataset", next(iter(self.dataset)))
         self.tokenizer = self.get_tokenizer()
 
     def __getitem__(self, idx):
@@ -23,7 +22,7 @@ class CustomDataset(Dataset):
         }
 
     def __len__(self):
-        return len(self.dataset)
+        return 100
 
     @staticmethod
     def get_tokenizer():
