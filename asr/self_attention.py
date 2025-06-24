@@ -1,11 +1,9 @@
 import math
-
 import torch
 import torch.nn.functional as F
 from torch import nn
 
 
-# Q * Kt / sqrt(Kd) * V
 def calculate_attention(query: torch.Tensor, keys: torch.Tensor, values: torch.Tensor, mask: torch.Tensor = None):
     attention_scores = torch.matmul(query, keys.transpose(-2, -1))  # Q * Kt
     attention_scores = attention_scores / math.sqrt(keys.shape[-1])  # 最后一维是embedding维度
@@ -55,14 +53,21 @@ class TransformerBlock(nn.Module):
     def __init__(self, embed_size):
         super().__init__()
         self.attention_layer = AttentionLayer(embed_size)
-        self.norm_layer = nn.LayerNorm(embed_size)
+        self.norm1 = nn.LayerNorm(embed_size)
+        self.norm2 = nn.LayerNorm(embed_size)
         self.feed_forward = FeedForward(embed_size)
 
     def forward(self, x, mask):
-        context, attention_scores = self.attention_layer(x, mask)
-        context = self.norm_layer(context)
-        context = F.gelu(context)
-        output = context + x
+        # Pre-LN Attention
+        norm_x = self.norm1(x)
+        attention_output, attention_scores = self.attention_layer(norm_x, mask)
+        x = x + attention_output  # Add
+
+        # Pre-LN FeedForward
+        norm_x = self.norm2(x)
+        ff_output = self.feed_forward(norm_x)
+        output = x + ff_output  # Add
+
         return output, attention_scores
 
 
@@ -91,21 +96,3 @@ class SinPositionEncoding(nn.Module):
 
     def forward(self, x):
         return x + self.positional_embedding[:x.size(1), :]
-
-
-class CausalLM(nn.Module):
-    def __init__(self, embed_size, vocab_size, num_layers):
-        super().__init__()
-        self.embedding_layer = nn.Parameter(torch.randn(vocab_size, embed_size))
-        self.transformer = Transformer(embed_size, num_layers)
-        self.positional_encoding = SinPositionEncoding(embed_size, max_seq_len=20)
-
-    def forward(self, x, return_attention_scores=False):
-        x = nn.functional.embedding(x, self.embedding_layer)
-        x = self.positional_encoding(x)
-        # x形状 b n d
-        x, attention_scores = self.transformer(x, True)
-        logits = torch.matmul(x, self.embedding_layer.T)
-        if return_attention_scores:
-            return logits, attention_scores
-        return logits

@@ -1,9 +1,8 @@
 import sys
-
-from torch import nn
-
 sys.path.append(".")
 
+from torch import nn
+from asr.tokenizer import my_tokenizer, blank_id
 import torch
 from torch.utils.data import DataLoader
 from asr.model import TranscribeModel
@@ -11,7 +10,7 @@ from asr.dataset import CustomDataset, collate_fn
 
 
 def run_loss_function(log_probs, target, blank_token):
-    loss_function = nn.CTCLoss(blank=blank_token)
+    loss_function = nn.CTCLoss(blank=blank_token, zero_infinity=True)
     input_lengths = tuple(log_probs.shape[1] for _ in range(log_probs.shape[0]))  # batch_size个seq_len
     target_lengths = (target != blank_token).sum(dim=1)  # (batch_size,)
     target_lengths = tuple(t.item() for t in target_lengths)
@@ -29,7 +28,7 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = TranscribeModel(num_codebooks=2, codebook_size=32, embedding_dim=16, num_transformer_layers=2,
-                            vocab_size=len(dataset.tokenizer.get_vocab()), strides=[6, 6, 6],
+                            vocab_size=len(my_tokenizer.get_vocab()), strides=[6, 6, 6],
                             initial_mean_pooling_kernel_size=4, max_seq_length=400).to(device)
     num_epochs = 1000
     steps = 0
@@ -45,7 +44,7 @@ if __name__ == '__main__':
             target = target.to(device)
             optimizer.zero_grad()
             output, vq_loss = model(audio)
-            ctc_loss = run_loss_function(output, target, blank_token=0)
+            ctc_loss = run_loss_function(output, target, blank_token=blank_id)
             vq_loss_weight = max(vq_final_loss_weight,
                                  vq_initial_loss_weight - (vq_initial_loss_weight - vq_final_loss_weight) * (
                                          steps / vq_warmup_steps))
@@ -56,7 +55,7 @@ if __name__ == '__main__':
             if torch.isinf(loss):
                 continue
             loss.backward()
-            torch.nn.utils.clip_grad_norm(model.parameters(), max_norm=10)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10)
             optimizer.step()
             vq_losses.append(vq_loss.item())
             ctc_losses.append(ctc_loss.item())

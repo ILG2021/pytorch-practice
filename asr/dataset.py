@@ -1,20 +1,21 @@
 import datasets
 import torch
-from tokenizers import Tokenizer, models
-from torch.utils.data import Dataset
+from tokenizers import Tokenizer, models, pre_tokenizers, decoders, trainers
 from torch.functional import F
+from torch.utils.data import Dataset
+
+from asr.tokenizer import my_tokenizer
 
 
 class CustomDataset(Dataset):
 
     def __init__(self):
         self.dataset = datasets.load_dataset("m-aliabbas/idrak_timit_subsample1", split="train")
-        self.tokenizer = self.get_tokenizer()
 
     def __getitem__(self, idx):
         item = self.dataset[idx]
         audio = torch.from_numpy(item["audio"]["array"]).float()
-        input_ids = self.tokenizer.encode(item["transcription"].upper()).ids
+        input_ids = my_tokenizer.encode(item["transcription"].upper()).ids
 
         return {
             "audio": audio,
@@ -24,14 +25,6 @@ class CustomDataset(Dataset):
     def __len__(self):
         return 100
 
-    @staticmethod
-    def get_tokenizer():
-        tokenizer = Tokenizer(models.BPE())
-        tokenizer.add_special_tokens(["▢"])
-        tokenizer.add_tokens(list("ABCDEFGHIJKLMNOPQRSTUVWXYZ '"))
-        tokenizer.boundary_token = tokenizer.token_to_id("▢")
-        tokenizer.save("tokenizer.json")
-        return tokenizer
 
 def collate_fn(batch):
     max_audio_len = max([item['audio'].shape[0] for item in batch])
