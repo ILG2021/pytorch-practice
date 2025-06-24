@@ -33,7 +33,6 @@ class TranscribeModel(nn.Module):
         self.output_layer = nn.Linear(embedding_dim, vocab_size)
 
     def forward(self, x: torch.Tensor):
-        loss = torch.tensor(0.0)
         x = x.unsqueeze(1)
         x = self.downsampling_model(x)
         x = self.pos_encoding(x)

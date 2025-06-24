@@ -1,6 +1,5 @@
 import datasets
 import torch
-from tokenizers import Tokenizer, models, pre_tokenizers, decoders, trainers
 from torch.functional import F
 from torch.utils.data import Dataset
 
