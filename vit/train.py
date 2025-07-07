@@ -2,7 +2,6 @@ import sys
 
 import torch.optim
 from torch import nn
-from torch.utils.data import Subset
 
 sys.path.append(".")
 from vit.dataset import get_dataloader
@@ -28,13 +27,3 @@ for epoch in range(num_epochs):
     print(f"epoch: {epoch} loss: {loss.item()}")
     torch.save(model.state_dict(), "vit/model_last.pth")
 
-# epoch: 0 loss: 0.6325286626815796
-# epoch: 1 loss: 0.3657349944114685
-# epoch: 2 loss: 0.22916299104690552
-# epoch: 3 loss: 0.15107090771198273
-# epoch: 4 loss: 0.11748348921537399
-# epoch: 5 loss: 0.0838257223367691
-# epoch: 6 loss: 0.06997260451316833
-# epoch: 7 loss: 0.057984743267297745
-# epoch: 8 loss: 0.04824843257665634
-# epoch: 9 loss: 0.049388304352760315

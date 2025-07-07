@@ -19,4 +19,4 @@ def generate(prefix, max_length=18):
             break
     return decode(input_tokens[0].tolist())
 
-print(generate("i like"))
+print(generate("machine"))

@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from llm.model import Transformer, SinPositionEncoding
+from transformer import Transformer, SinPositionEncoding
 
 
 class VisionTransformer(nn.Module):
