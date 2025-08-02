@@ -8,7 +8,7 @@ sys.path.append(".")
 from asr.downsampling import DownsamplingModal
 from asr.rvq import ResidualVectorQuantizer
 
-from asr.self_attention import SinPositionEncoding, Transformer
+from asr.transformer import SinPositionEncoding, Transformer
 
 
 class TranscribeModel(nn.Module):
