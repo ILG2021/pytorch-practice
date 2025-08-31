@@ -74,7 +74,7 @@ def infer():
 
 
 @click.command()
-@click.option("--is_train", default=True)
+@click.option("--is_train", default=False)
 def main(is_train):
     if is_train:
         train()
