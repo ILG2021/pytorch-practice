@@ -93,11 +93,12 @@ def infer():
     model.eval()
     hit = 0
     total = 0
-    for image, label in train_loader:
-        image, label = image.to(device), label.to(device)
-        predict = model(image)
-        hit += (torch.argmax(predict, -1) == label).sum().item()
-        total += image.shape[0]
+    with torch.no_grad():
+        for image, label in train_loader:
+            image, label = image.to(device), label.to(device)
+            predict = model(image)
+            hit += (torch.argmax(predict, -1) == label).sum().item()
+            total += image.shape[0]
     print(f"Accurate: {hit / total}")
 
 

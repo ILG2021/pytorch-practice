@@ -64,13 +64,14 @@ def infer():
     model.load_state_dict(torch.load("./basic/lenet5.pth"))
     hit = 0
     total = 0
-    for image, label in testloader:
-        image, label = image.to(device), label.to(device)
-        predict = model(image)
-        predict = torch.argmax(predict, -1)
-        hit += (predict == label).sum().item()
-        total += label.size(0)
-    print(f"accurate:{hit / total}")
+    with torch.no_grad():
+        for image, label in testloader:
+            image, label = image.to(device), label.to(device)
+            predict = model(image)
+            predict = torch.argmax(predict, -1)
+            hit += (predict == label).sum().item()
+            total += label.size(0)
+        print(f"accurate:{hit / total}")
 
 
 @click.command()
