@@ -112,14 +112,14 @@ vocab_zh = build_vocab_from_iterator(
     tokens_zh,
     min_freq=2,
     specials=['<unk>', '<pad>', '<bos>', '<eos>'],
-    max_tokens=10000
+    max_tokens=20000
 )
 
 vocab_en = build_vocab_from_iterator(
     tokens_en,
     min_freq=2,
     specials=['<unk>', '<pad>', '<bos>', '<eos>'],
-    max_tokens=10000
+    max_tokens=20000
 )
 
 vocab_zh.set_default_index(vocab_zh['<unk>'])
@@ -175,7 +175,7 @@ def train():
         batch_en = pad_sequence(batch_en, True, vocab_en['<pad>'])
         return batch_zh, batch_en
 
-    dataloader = DataLoader(trainset, 32, shuffle=True, collate_fn=collate_fn)
+    dataloader = DataLoader(trainset, 1, shuffle=True, collate_fn=collate_fn)
 
     # 优化器和学习率调度
     optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -191,7 +191,9 @@ def train():
 
         for batch_zh, batch_en in dataloader:
             batch_zh, batch_en = batch_zh.to(device), batch_en.to(device)
-
+            # print([vocab_zh.lookup_token(token) for token in batch_zh[0]])
+            # print([vocab_en.lookup_token(token) for token in batch_en[0]])
+            # print("---------------")
             optimizer.zero_grad()
 
             # Teacher forcing rate随训练降低
