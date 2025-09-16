@@ -175,7 +175,7 @@ def train():
         batch_en = pad_sequence(batch_en, True, vocab_en['<pad>'])
         return batch_zh, batch_en
 
-    dataloader = DataLoader(trainset, 1, shuffle=True, collate_fn=collate_fn)
+    dataloader = DataLoader(trainset, 32, shuffle=True, collate_fn=collate_fn)
 
     # 优化器和学习率调度
     optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -276,11 +276,27 @@ def translate_sentence(sentence):
 
     return ' '.join(translated)
 
+# 规范化显示
+def format_params(params):
+    if params >= 1_000_000_000:  # 十亿
+        return f"{params / 1_000_000_000:.2f}B"
+    elif params >= 1_000_000:  # 百万
+        return f"{params / 1_000_000:.2f}M"
+    elif params >= 1_000:  # 千
+        return f"{params / 1_000:.2f}K"
+    else:
+        return f"{params}"
 
 def infer():
     try:
         model.load_state_dict(torch.load("basic/seq2seq.pth", map_location=device))
         model.eval()
+        # 统计总参数量
+        total_params = sum(p.numel() for p in model.parameters())
+        print(f"模型总参数量: {format_params(total_params)}")
+        # 统计可训练参数量
+        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f"可训练参数量: {format_params(trainable_params)}")
         print("Model loaded successfully!")
     except FileNotFoundError:
         print("Model file not found. Please train the model first.")
