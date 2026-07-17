@@ -6,6 +6,7 @@ from datasets import load_dataset
 from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 from model import GPT2
 
@@ -53,9 +54,10 @@ model.train()
 writer = SummaryWriter(log_dir="runs/gpt2")
 
 global_step = 0
-for epoch in range(10):
+for epoch in range(3):
     total_loss = 0
-    for x, y in dataloader:
+    pbar = tqdm(dataloader, desc=f"Epoch {epoch+1}/3", unit="batch")
+    for x, y in pbar:
         x = x.to(device)
         y = y.to(device)
         optimizer.zero_grad()
@@ -64,9 +66,14 @@ for epoch in range(10):
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # 梯度裁剪，防止梯度爆炸
         optimizer.step()
         scheduler.step()
-        if global_step % 10 == 0 and global_step != 0:
-            print("steps", global_step, "loss:", loss.item())
-            writer.add_scalar("loss",loss.item(), global_step)
+        total_loss += loss.item()
+        # 实时更新进度条后缀
+        pbar.set_postfix({
+            "loss": f"{loss.item():.4f}",
+            "avg_loss": f"{total_loss / (pbar.n + 1):.4f}",
+            "lr": f"{scheduler.get_last_lr()[0]:.2e}"
+        })
+        writer.add_scalar("loss", loss.item(), global_step)
         global_step += 1
 
 torch.save(model.state_dict(), "gpt2/gpt2.pth")
