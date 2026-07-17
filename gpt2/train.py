@@ -41,7 +41,7 @@ class MyDataset(Dataset):
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-dataloader = DataLoader(dataset=MyDataset(), batch_size=4, shuffle=True)
+dataloader = DataLoader(dataset=MyDataset(), batch_size=12, shuffle=True)
 model = GPT2()
 model = model.to(device)
 total_param = sum(p.numel() for p in model.parameters())
