@@ -1,4 +1,5 @@
 # 使用https://huggingface.co/datasets/ej2/seq-monkey-data/resolve/main/%E5%8F%A4%E8%AF%97%E4%BB%8A%E8%AF%91.tar.bz2训练
+import math
 import tiktoken
 import torch
 from datasets import load_dataset
@@ -30,7 +31,7 @@ class MyDataset(Dataset):
             self.encoded_data.append(chunk)
 
     def __len__(self):
-        return len(self.encoded_data)
+        return min(len(self.encoded_data), 1000)
 
     def __getitem__(self, idx):
         item = self.encoded_data[idx]
