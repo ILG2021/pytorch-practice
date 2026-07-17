@@ -66,6 +66,7 @@ class TransformerBlock(nn.Module):
 class GPT2(nn.Module):
     def __init__(self, vocab_size=50257, hidden_dim=768, heads=12, layers=12, max_seq_length=512, dropout_rate = 0.1):
         super().__init__()
+        self.max_seq_length = max_seq_length
         self.token_embedding = nn.Embedding(vocab_size, hidden_dim)
         self.position_embedding = nn.Embedding(max_seq_length, hidden_dim)
         self.dropout = nn.Dropout(dropout_rate)
@@ -98,7 +99,7 @@ class GPT2(nn.Module):
             input_ids = tokenizer.encode(input_str)
             generated_ids = []
             eos = tokenizer.encode("<|endoftext|>", allowed_special={"<|endoftext|>"})[0]
-            for i in range(512): # 最多512个token
+            for i in range(511): # 最多512个token
                 logits = self.forward(torch.tensor(input_ids, device=device).unsqueeze(0))
                 next_token = torch.argmax(logits[:,-1, :], -1)
                 token_id = next_token[0].item()
