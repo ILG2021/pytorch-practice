@@ -98,7 +98,7 @@ class GPT2(nn.Module):
             input_ids = tokenizer.encode(input_str)
             output_str = ""
             eos = tokenizer.encode("<|endoftext|>", allowed_special={"<|endoftext|>"} )[0]
-            for i in range(512): # 最多256个token
+            for i in range(256): # 最多256个token
                 logits = self.forward(torch.tensor(input_ids, device=device).unsqueeze(0))
                 next_token = torch.argmax(logits[:,-1, :], -1)
                 output_str += tokenizer.decode([next_token[0].item()])
