@@ -101,7 +101,7 @@ class GPT2(nn.Module):
             for i in range(512): # 最多256个token
                 logits = self.forward(torch.tensor(input_ids, device=device).unsqueeze(0))
                 next_token = torch.argmax(logits[:,-1, :], -1)
-                output_str += tokenizer.decode(next_token[0].item())
+                output_str += tokenizer.decode([next_token[0].item()])
                 if next_token[0].item() == eos:
                     break
                 input_ids.append(next_token[0].item())
