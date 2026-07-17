@@ -31,7 +31,7 @@ class MyDataset(Dataset):
             self.encoded_data.append(chunk)
 
     def __len__(self):
-        return min(len(self.encoded_data), 1000)
+        return len(self.encoded_data)
 
     def __getitem__(self, idx):
         item = self.encoded_data[idx]
@@ -53,7 +53,7 @@ model.train()
 writer = SummaryWriter(log_dir="runs/gpt2")
 
 global_step = 0
-for epoch in range(3):
+for epoch in range(10):
     total_loss = 0
     for x, y in dataloader:
         x = x.to(device)
