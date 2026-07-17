@@ -93,16 +93,25 @@ class GPT2(nn.Module):
             loss = F.cross_entropy(logits, targets)
             return logits, loss
 
-    def generate(self, input_str, tokenizer):
+    def generate(self, input_str, tokenizer, max_new_tokens=256, temperature=1.0, top_k=50):
         with torch.no_grad():
             device = next(self.parameters()).device
             input_ids = tokenizer.encode(input_str)
             generated_ids = []
             eos = tokenizer.encode("<|endoftext|>", allowed_special={"<|endoftext|>"})[0]
-            for i in range(256): # 最多512个token
-                logits = self.forward(torch.tensor(input_ids, device=device).unsqueeze(0))
-                next_token = torch.argmax(logits[:,-1, :], -1)
-                token_id = next_token[0].item()
+            for i in range(max_new_tokens):
+                # 截断到 max_seq_length，避免超出注意力掩码范围
+                input_ids_truncated = input_ids[-self.max_seq_length:]
+                logits = self.forward(torch.tensor(input_ids_truncated, device=device).unsqueeze(0))
+                # 取最后一个位置的 logits，并用温度缩放
+                next_logits = logits[:, -1, :] / temperature
+                # top-k 过滤：只保留概率最高的 k 个 token
+                if top_k > 0:
+                    values, _ = torch.topk(next_logits, top_k)
+                    min_val = values[:, -1].unsqueeze(-1)
+                    next_logits = next_logits.masked_fill(next_logits < min_val, float('-inf'))
+                probs = torch.softmax(next_logits, dim=-1)
+                token_id = torch.multinomial(probs, num_samples=1)[0, 0].item()
                 if token_id == eos:
                     break
                 generated_ids.append(token_id)

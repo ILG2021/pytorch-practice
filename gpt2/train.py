@@ -26,7 +26,7 @@ class MyDataset(Dataset):
         max_seq_len = 512
         for i in range(0, len(all_encoded), max_seq_len):
             chunk = all_encoded[i:i + max_seq_len + 1]
-            if len(chunk) < max_seq_len:
+            if len(chunk) < max_seq_len + 1:  # 需要 max_seq_len+1 个 token（x 和 y 各 max_seq_len 个）
                 chunk += [eos] * (max_seq_len + 1 - len(chunk))
             self.encoded_data.append(chunk)
 
@@ -45,7 +45,7 @@ dataloader = DataLoader(dataset=MyDataset(), batch_size=4, shuffle=True)
 model = GPT2()
 model = model.to(device)
 total_param = sum(p.numel() for p in model.parameters())
-print(f"总参数：{total_param / 1e6}MB")
+print(f"总参数：{total_param / 1e6:.2f}M")
 optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
 scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(dataloader)*3)
 
@@ -61,6 +61,7 @@ for epoch in range(3):
         optimizer.zero_grad()
         logits, loss = model(x, y)
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # 梯度裁剪，防止梯度爆炸
         optimizer.step()
         scheduler.step()
         if global_step % 10 == 0 and global_step != 0:
